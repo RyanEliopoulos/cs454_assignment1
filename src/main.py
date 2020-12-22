@@ -1,14 +1,9 @@
 import requests
+from requests.auth import HTTPBasicAuth
 import json
 
 
 """
-
-    NOTES:
-        Redirect URL is set to http://localhost:8080
-
-        So when I attempt to authenticate, does that mean I need to listen on that port to get the tokens or
-        will those be supplied in the requests response?
 
 """
 
@@ -19,19 +14,32 @@ with open('../resources/config.json', 'r') as config_file:
     client_id = json_rep['client_id']
     secret = json_rep['secret']
 
+print(username, password, client_id, secret)
 
+access_token = '53781142054-m88rv79ElvThKEHpk36h3wuY35km3w'
 data = {
     'grant_type': 'password'
     , 'username': username
-    , 'pas sword': password
+    , 'password': password
 }
 
+user_agent = 'ham/0.1 by SPQRMP'
 headers = {
-    'User-agent': 'SPQR'
-    , 'con tent-type': 'application/x-www-form-urlencoded'
+    'User-Agent': user_agent
+    #, 'content-type': 'application/x-www-form-urlencoded'
 }
-ret = requests.post('https://www.reddit.com/api/v1/access_token', params=data, auth=(client_id, secret)
-                    , headers=headers)
+#ret = requests.post('https://www.reddit.com/api/v1/access_token', params=data, auth=HTTPBasicAuth(client_id, secret)
+ #                   , headers=headers)
 
-print(ret.content)
-print('hello')
+#print(ret.json())
+
+new_headers = {
+    'User-Agent': user_agent
+    , 'Authorization': f'Bearer {access_token}'
+}
+
+
+latest_ret = requests.get('https://oauth.reddit.com/r/funny/hot', headers=new_headers)
+
+print(latest_ret.json())
+
