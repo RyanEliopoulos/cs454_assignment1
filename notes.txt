@@ -1,0 +1,21 @@
+
+'selftext' field is the contents of the post itself.
+'title' is the headline of each post as seen on the site.
+Some posts have no 'selftext' and consists entirely of the title. Beware.
+
+
+['data']['url'] Gives the link to the post.
+There is also ['data']['permalink']. Sounds permanent so should use..
+
+
+## Potential labels for later analysis
+link_flair_richtext [{'e': 'text', 't': 'Gain'}] Is a helpful label for analysis
+link_flair_css_class profit
+total_awards_received 28
+upvote_ratio 0.92
+num_comments 675
+
+
+
+## Nasdaq URL for historical pricing data
+https://api.nasdaq.com/api/quote/AAPL/historical?assetclass=stocks&fromdate=2011-09-06&limit=9999&todate=2021-09-06
