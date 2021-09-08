@@ -6,6 +6,7 @@
 
 import json
 import requests
+import time
 import datetime
 from requests.auth import HTTPBasicAuth
 
@@ -20,6 +21,8 @@ class RedditCommunicator:
         self.access_token: str = ''  # Updated in get_token
         self.token_time: datetime.datetime   # Creation time. Updated in get_token
         self.get_token()
+        self.rlimit_remaining: int = 600  # Remaining API calls allowed for given unit of time
+        self.rlimit_reset: int = 0  # Duration until rate limit is reset
 
     def get_token(self) -> None:
         """ Responsible for getting an access token for API calls """
@@ -53,8 +56,10 @@ class RedditCommunicator:
         self.token_timestamp = datetime.datetime.now()
         self.access_token = ret_json['access_token']
 
-    def request_of_somesort(self):
-        """ Need to decide on rules for scrapping """
+    def check_token(self):
+        """ To be called before each API request.
+            Ensures valid access token will be used.
+        """
         # Checking freshness of the access token
         current_time: datetime.datetime = datetime.datetime.now()
         time_delta: datetime.timedelta = current_time - self.token_timestamp
@@ -62,24 +67,71 @@ class RedditCommunicator:
         if elapsed_seconds >= 3000:
             self.get_token()
 
+    def crawl_posts(self, start: float, end: float):
+        """ crawls postings from "new" between the given dates.
+            start and end are unix timestamps
+        """
+        self.check_token()
+        # Pulling newest post
         headers = {
             'User-Agent': 'ham/.01 by SPQRMP',
             'Authorization': f'Bearer {self.access_token}'
         }
-        latest_ret = requests.get(self.content_base + 'wallstreetbets/hot', headers=headers)
+        # latest_ret = requests.get(self.content_base + 'wallstreetbets/new', headers=headers)
+        latest_ret = self.crawl_request(headers=headers)
         if latest_ret.status_code != 200:
-            print('Error getting content')
-            print(latest_ret.text)
+            print(f'Error getting content from wsb {latest_ret.text}')
             exit(1)
         ret_dict = latest_ret.json()
-        data = ret_dict['data']
-        posts: list = data['children']  # This itself is now made up of a list of listings?
-        for post in posts:
-            if post['data']['author_fullname'] == 't2_7j95264g':
-                for key in post['data'].keys():
-                    print(key, post['data'][key])
-                # print(post)
-            # print(post)
+        data: dict = ret_dict['data']
+        raw_posts: list = data['children']  # 'Listings' indexed newest at 0.
+        post_date: float = raw_posts[0]['data']['created_utc']  # unix timestamp
+        # Iterating through posts now
+        desired_posts: list = []
+        while True:
+            for post in raw_posts:
+                if post_date < start:  # Beyond earliest desired time. Crawling complete.
+                    break
+                if post_date > end:  # Beyond latest desired time. Moving to next post
+                    continue
+                desired_posts.append(post)
+            # Checking fnx exit condition
+            if post_date < start:
+               break
+            # Preparing next GET request
+            last_post: dict = raw_posts[-1]
+            post_name: str = last_post['data']['name']  # point of reference for the reddit API
+            params = {
+                'after': post_name
+            }
+            # Retrieving next batch of posts
+            self.check_token()
+            ret = self.crawl_request(headers=headers, params=params)
+            if ret.status_code != 200:
+                print(f'Error downloading wsb posts: {ret.text}')
+                exit(1)
+            # Beginning cycle anew
+            data = ret.json()['data']
+            raw_posts = data['children']
+            post_date: float = raw_posts[0]['data']['created_utc']  # unix timestamp
+        return 0, {'content': desired_posts}
+
+    def crawl_request(self,
+                      headers: dict = {},
+                      params: dict = {},
+                      ) -> requests.Response:
+        """ returns the output from requests.get.
+            Separate fnx in order to simplify rate limit adherence.
+        """
+        # Checking rate limit situation
+        if self.rlimit_remaining == 0:
+            time.sleep(self.rlimit_reset+2)
+        ret = requests.get(self.content_base + 'wallstreetbets/new',
+                           headers=headers,
+                           params=params)
+        self.rlimit_remaining = int(float(ret.headers['x-ratelimit-remaining']))  # str to float to int
+        self.rlimit_reset = ret.headers['x-ratelimit-reset']
+        return ret
 
     def manual(self):
         names = 't3_piyhzv'
@@ -89,7 +141,6 @@ class RedditCommunicator:
         }
         ret = requests.get(self.content_base + 'by_id' + names,
                            headers=headers)
-
         if ret.status_code != 200:
             print('Manual error')
             exit(1)

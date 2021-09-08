@@ -4,6 +4,7 @@
 from DBInterface import DBInterface
 from NasdaqDownloader import NasdaqDownloader
 from RedditCommunicator import RedditCommunicator
+from RedditParser import RedditParser
 import misc
 
 
@@ -53,6 +54,7 @@ class Controller:
             pull_ret = self.nd_downloader.pull_symbol_data(symbol)
             if pull_ret[0] != 0:
                 print(f'Error pulling historical data for {symbol}: {ret}')
+                continue
             row_data: list = pull_ret[1]['content']['data']['tradesTable']['rows']
             # Updating database
             print(f'loading data for {symbol}')
@@ -84,3 +86,25 @@ class Controller:
             count -= 1
             if count == 0:
                 break
+
+    def crawl_wsb(self, start: float, end: float) -> None:
+        """ Crawls reddit posts between the given start and end timestamps """
+        # Pulling relevant posts from Reddit
+        ret = self.r_communicator.crawl_posts(start, end)
+        if ret[0] != 0:
+            print(ret)
+        posts = ret[1]['content']
+        # Retrieving the list of stock symbols
+        ret = self.db_interface.symbol_list()
+        if ret[0] != 0:
+            print(f'Error querying db for symobls: {ret}')
+            exit(1)
+        symbol_list: list = ret[1]['content']
+        # Parsing and filtering posts
+        rp: RedditParser = RedditParser(posts, symbol_list)
+        matching_posts: list[dict] = rp.parse()
+        for match in matching_posts:
+            print(f'Matching post! {match}')
+            # Insert the post into wsb_posts table
+            # Update post_symbol_junction table with an entry.
+            ...

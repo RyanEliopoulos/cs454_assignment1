@@ -1,6 +1,7 @@
 import requests
 from requests.auth import HTTPBasicAuth
 import json
+import datetime
 
 import Controller
 
@@ -43,6 +44,11 @@ import Controller
 
 if __name__ == '__main__':
     cnt = Controller.Controller('testing.db')
-    cnt.build_symbol_list()
-    cnt.populate_historical_data()
+    # cnt.populate_historical_data()
+
+    start = datetime.datetime(2021, 9, 1, 0, 0).timestamp()
+    end = datetime.datetime(2021, 9, 6, 0, 0).timestamp()
+
+    cnt.crawl_wsb(start, end)
+
 

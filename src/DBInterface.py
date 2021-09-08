@@ -1,5 +1,6 @@
 import sqlite3
 
+ #@TODO make post_symbol_junction table use both post and symbol as the primary key
 
 class DBInterface:
 
@@ -146,6 +147,20 @@ class DBInterface:
         sqlstring = """ SELECT * FROM stock_symbols ss
                         WHERE ss.stock_symbol not in (SELECT stock_symbol FROM historical_data)
                     """
+        ret = self._execute_query(sqlstring)
+        if ret[0] != 0:
+            return ret
+        results: list = self.db_cursor.fetchall()
+        symbol_list: list = []
+        for row in results:
+            symbol_list.append(row['stock_symbol'])
+        return 0, {'content': symbol_list}
+
+    def symbol_list(self) -> tuple[int, dict]:
+        """ Returns the list of stock symbols """
+
+        sqlstring: str = """ SELECT * FROM stock_symbols
+                         """
         ret = self._execute_query(sqlstring)
         if ret[0] != 0:
             return ret

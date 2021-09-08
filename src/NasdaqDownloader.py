@@ -47,12 +47,14 @@ class NasdaqDownloader:
         """ Pulls historic data for a given stock symbol going back 10 years. """
         self._enforce_crawl_delay()
         # Pulling data
+        # @TODO Need to automatically determine the appropriate date values.
+        # API is inconsistent though. Some require using a day prior, others give errors when doing so..
         api_url: str = f'https://api.nasdaq.com/api/quote/{stock_symbol}/historical?assetclass=stocks&fromdate=' \
                        f'2011-09-06&limit=9999&todate=2021-09-06'
         req = requests.get(api_url, headers=self.request_headers)
         self.last_crawl = datetime.datetime.now()
         if req.status_code != 200:
-            return -1, {'error_message': req.text}
+            return -1, {'error_message': req}
         return 0, {'content': req.json()}
 
     def _enforce_crawl_delay(self) -> None:
