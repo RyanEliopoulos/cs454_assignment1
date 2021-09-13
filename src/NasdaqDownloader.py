@@ -34,7 +34,7 @@ class NasdaqDownloader:
         return delay
 
     def pull_all_symbols(self):
-        """ Pulls complete list of nasdaq stock symbols """
+        """ Pulls complete list of nasdaq stock symbols from nasdaq.com """
         self._enforce_crawl_delay()
         dl_url: str = 'https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=25&offset=0&download=true'
         req = requests.get(dl_url, headers=self.request_headers)
@@ -43,14 +43,17 @@ class NasdaqDownloader:
             return -1, {'error_message': req.text}
         return 0, {'content': req.json()}
 
-    def pull_symbol_data(self, stock_symbol: str) -> tuple[int, dict]:
-        """ Pulls historic data for a given stock symbol going back 10 years. """
+    def pull_symbol_data(self,
+                         stock_symbol: str,
+                         day_of_month: str,
+                         month: str) -> tuple[int, dict]:
+        """ Pulls historic data for a given stock symbol going back 10 years.
+        """
         self._enforce_crawl_delay()
         # Pulling data
-        # @TODO Need to automatically determine the appropriate date values.
         # API is inconsistent though. Some require using a day prior, others give errors when doing so..
         api_url: str = f'https://api.nasdaq.com/api/quote/{stock_symbol}/historical?assetclass=stocks&fromdate=' \
-                       f'2011-09-06&limit=9999&todate=2021-09-06'
+                       f'2011-{month}-{day_of_month}&limit=9999&todate=2021-{month}-{day_of_month}'
         req = requests.get(api_url, headers=self.request_headers)
         self.last_crawl = datetime.datetime.now()
         if req.status_code != 200:
@@ -66,7 +69,6 @@ class NasdaqDownloader:
         if self.crawl_delay > td_seconds:
             # Not enough time has yet elapsed since the last request..
             remaining_time = self.crawl_delay - td_seconds
-            print(f'Need to wait another {remaining_time} seconds for the crawl delay..')
-            print(datetime.datetime.now())
+            print(f'Need to wait another {remaining_time} seconds for the crawl delay..', datetime.datetime.now())
             time.sleep(remaining_time)
 

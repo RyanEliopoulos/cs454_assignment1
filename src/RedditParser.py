@@ -77,6 +77,9 @@ class RedditParser:
             word_list: list = combined.split(' ')
             # Creating new substrings split on non alpha characters
             word_list = self._remove_nonalpha(word_list)
+            # Transforming to all uppercase
+            for x in range(len(word_list)):
+                word_list[x] = word_list[x].upper()
             # Eliminating duplicates
             word_set: set = set(word_list)
             # Determining symbols found within the post

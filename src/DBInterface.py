@@ -1,6 +1,9 @@
 import sqlite3
 
- #@TODO make post_symbol_junction table use both post and symbol as the primary key
+# @TODO Include post title and post text in table wsb_posts
+# @TODO Descriptive text for each tuple?
+# @TODO add the full name of the company in table stock_symbols e.g. Microsoft
+
 
 class DBInterface:
 
@@ -30,15 +33,24 @@ class DBInterface:
         """
             Debug fnx for manually manipulating the databse
         """
-        sqlstring = """ SELECT * FROM stock_symbols """
+        sqlstring = """  DELETE FROM wsb_posts
+                        WHERE 1=1; 
+                   """
         ret = self._execute_query(sqlstring)
         if ret[0] != 0:
             print("Problem running manual control")
             print(ret)
             exit(1)
-        results = self.db_cursor.fetchall()
-        for row in results:
-            print(row['stock_symbol'])
+
+        self.db_connection.commit()
+
+    def pull_table(self, table: str) -> tuple[int, dict]:
+        sqlstring: str = f""" SELECT * FROM  {table}"""
+        ret = self._execute_query(sqlstring)
+        if ret[0] != 0:
+            return ret
+        results: list = self.db_cursor.fetchall()
+        return 0, {'content': results}
 
     def seed_db(self) -> tuple[int, dict]:
         """ Responsible for initializing the database according to the desired schema.
@@ -84,13 +96,14 @@ class DBInterface:
         sqlstring = """ CREATE TABLE wsb_posts (
                             post_id TEXT NOT NULL PRIMARY KEY,
                             author TEXT NOT NULL,
-                            title TEXT NOT NULL,
-                            text TEXT,
-                            hyperlink TEXT NOT NULL,
-                            flair TEXT,
-                            awards INTEGER NOT NULL,
+                            author_fullname TEXT NOT NULL,
                             upvote_ratio REAL NOT NULL,
-                            comment_count INTEGER NOT NULL
+                            comment_count INTEGER NOT NULL,
+                            url TEXT NOT NULL,
+                            award_count INTEGER NOT NULL,
+                            post_title TEXT NOT NULL,
+                            post_content TEXT,
+                            timestamp REAL NOT NULL
                         )
                     """
         ret = self._execute_query(sqlstring)
@@ -99,6 +112,7 @@ class DBInterface:
         sqlstring = """ CREATE TABLE symbol_post_junction (
                             post_id TEXT NOT NULL,
                             stock_symbol TEXT NOT NULL,
+                            PRIMARY KEY (post_id, stock_symbol),
                             FOREIGN KEY(post_id) REFERENCES wsb_posts,
                             FOREIGN KEY(stock_symbol) REFERENCES stock_symbols
                             )
@@ -170,6 +184,58 @@ class DBInterface:
             symbol_list.append(row['stock_symbol'])
         return 0, {'content': symbol_list}
 
-    def insert_post(self,
-                    other_args):
-        ...
+    def prune_symbol(self, symbol: str) -> tuple[int, dict]:
+        sqlstring: str = """ DELETE FROM stock_symbols
+                             WHERE stock_symbol = (?)
+                         """
+        ret = self._execute_query(sqlstring, (symbol,))
+        if ret[0] == 0:
+            self.db_connection.commit()
+        return ret
+
+    def insert_post(self, post: dict) -> tuple[int, dict]:
+        """ Takes a 'listing' object as returned from the reddit API. Includes a 'included_symbols' key
+            whose value is a list of strings.
+        """
+        # Pulling out raw post information first
+        post_id: str = post['data']['name']                        # Encoded ID of the post
+        author: str = post['data']['author']                    # Uses the encoded name
+        author_fullname: str = post['data']['author_fullname']  # Encoded ID used by the API
+        upvote_ratio: float = post['data']['upvote_ratio']
+        comm_count: int = post['data']['num_comments']
+        url: str = post['data']['permalink']
+        award_count: int = post['data']['total_awards_received']
+        post_title: str = post['data']['title']
+        post_content: str = post['data']['selftext']
+        timestamp: float = post['data']['created']
+        # Inserting values
+        sqlstring: str = """ INSERT INTO wsb_posts
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                         """
+        ret = self._execute_query(sqlstring, (post_id,
+                                              author,
+                                              author_fullname,
+                                              upvote_ratio,
+                                              comm_count,
+                                              url,
+                                              award_count,
+                                              post_title,
+                                              post_content,
+                                              timestamp))
+        if ret[0] != 0:
+            return ret
+
+        # Ingesting the symbol information now
+        included_symbols: list = post['included_symbols']
+        for symbol in included_symbols:
+            # Update the post_symbol_junction table with entries.
+            sqlstring = """ INSERT INTO symbol_post_junction
+                            VALUES (?, ?)
+                        """
+            ret = self._execute_query(sqlstring, (post_id,
+                                                  symbol))
+            if ret[0] != 0:
+                return -1, {'error_message': f'Failed to update symbol for post {post_id} {post_title}: {ret[1]}'}
+        # Successfully added all post elements to the database
+        self.db_connection.commit()
+        return 0, {'success_message': f'Post {post_id} successfully commited to the database'}

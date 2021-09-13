@@ -95,6 +95,8 @@ class RedditCommunicator:
                 if post_date > end:  # Beyond latest desired time. Moving to next post
                     continue
                 desired_posts.append(post)
+                post_title: str = post['data']['title']
+                print(f'Desired post found {post_title}')
             # Checking fnx exit condition
             if post_date < start:
                break
@@ -113,7 +115,16 @@ class RedditCommunicator:
             # Beginning cycle anew
             data = ret.json()['data']
             raw_posts = data['children']
-            post_date: float = raw_posts[0]['data']['created_utc']  # unix timestamp
+            try:
+                post_date: float = raw_posts[0]['data']['created_utc']  # unix timestamp
+            except IndexError as e:
+                # Cannot go further back. Only the most recent 1000 posts are accessible through the 'new' endpoint
+                print(f'No results provided from api call this time. 1k limit reached')
+                prev = desired_posts[-1]
+                post_title = prev['data']['title']
+                link = prev['data']['permalink']
+                print(f'Last post: {post_title}::: Hyperlink: {link}')
+                break
         return 0, {'content': desired_posts}
 
     def crawl_request(self,
@@ -123,7 +134,7 @@ class RedditCommunicator:
         """ returns the output from requests.get.
             Separate fnx in order to simplify rate limit adherence.
         """
-        # Checking rate limit situation
+        # Checking if API calls have been exhausted
         if self.rlimit_remaining == 0:
             time.sleep(self.rlimit_reset+2)
         ret = requests.get(self.content_base + 'wallstreetbets/new',
@@ -134,6 +145,7 @@ class RedditCommunicator:
         return ret
 
     def manual(self):
+        """ DEBUG METHOD """
         names = 't3_piyhzv'
         headers = {
             'User-Agent': 'ham/.01 by SPQRMP',
