@@ -45,8 +45,11 @@ class Controller:
         """ Some stock symbols don't have a base value not followed by a caret denoting some special class or
             status for the stock.  The initial assumption was one would exist for every symbol, so truncating
             the caret and inserting the base symbol would be fine. Now there are invalid symbols in the table.
-
             Checks values in the DB against the raw values from nasdaq.com
+
+            Also removes symbols with a slash in them..
+
+            Only removes tuples from the stock_symbols table. No other records are touched.
         """
         ret = self.nd_downloader.pull_all_symbols()
         if ret[0] != 0:
@@ -72,6 +75,14 @@ class Controller:
                     print(f'Error pruning symbol {stored_symbol}')
                 else:
                     print(f'Sucessfully deleted symbol {stored_symbol} from the db.')
+        # Pruning symbols containing a slash
+        for stored_symbol in stored_list:
+            if '/' in stored_symbol:
+                ret = self.db_interface.prune_symbol(stored_symbol)
+                if ret[0] != 0:
+                    print(f'Error pruning symbol {stored_symbol}')
+                else:
+                    print(f'Successfully deleted symbol {stored_symbol} from the db.')
 
     def populate_historical_data(self, count: int = 20) -> tuple[int, dict]:
         """ Pulls a list of stock symbols still requiring historical data and begins updating.
@@ -156,3 +167,9 @@ class Controller:
             ret = self.db_interface.insert_post(post)
             if ret[0] != 0:
                 print(f'Error inserting post into database: {ret}')
+
+    def seed(self):
+        ret = self.db_interface.seed_db()
+        if ret[0] != 0:
+            print(f'Error seeding database: {ret}')
+            exit(1)

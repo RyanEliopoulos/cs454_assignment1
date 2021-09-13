@@ -1,6 +1,5 @@
 import sqlite3
 
-# @TODO Include post title and post text in table wsb_posts
 # @TODO Descriptive text for each tuple?
 # @TODO add the full name of the company in table stock_symbols e.g. Microsoft
 
@@ -33,8 +32,8 @@ class DBInterface:
         """
             Debug fnx for manually manipulating the databse
         """
-        sqlstring = """  DELETE FROM wsb_posts
-                        WHERE 1=1; 
+        sqlstring = """  SELECT * FROM historical_data
+                        
                    """
         ret = self._execute_query(sqlstring)
         if ret[0] != 0:
@@ -42,7 +41,10 @@ class DBInterface:
             print(ret)
             exit(1)
 
-        self.db_connection.commit()
+        results = self.db_cursor.fetchall()
+        return 0, {'content': results}
+
+        # self.db_connection.commit()
 
     def pull_table(self, table: str) -> tuple[int, dict]:
         sqlstring: str = f""" SELECT * FROM  {table}"""
