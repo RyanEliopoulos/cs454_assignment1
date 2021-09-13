@@ -1,5 +1,8 @@
 @TODO
 
+
+README needs to include sections explaining reddit credentials.
+
 Stock symbol list is much less static that I had figured. Clearly symbols come in and out
 regularly enough to warrant further consideration to deal with it.
 

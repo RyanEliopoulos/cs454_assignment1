@@ -73,7 +73,8 @@ class DBInterface:
                 print(ret)
                 exit(1)
 
-        sqlstring = """ CREATE TABLE stock_symbols ( stock_symbol TEXT NOT NULL PRIMARY KEY )
+        sqlstring = """ CREATE TABLE stock_symbols ( stock_symbol TEXT NOT NULL PRIMARY KEY,
+                                                     corp_name TEXT NOT NULL )
                     """
         ret = self._execute_query(sqlstring)
         if ret[0] != 0:
@@ -125,11 +126,14 @@ class DBInterface:
         self.db_connection.commit()
         return 0, {'success_message': 'Successfully seeded db'}
 
-    def insert_symbol(self, stock_symbol: str) -> tuple[int, dict]:
+    def insert_symbol(self,
+                      stock_symbol: str,
+                      corp_name: str) -> tuple[int, dict]:
         sqlstring = """ INSERT INTO stock_symbols
-                        VALUES (?)
+                        VALUES (?, ?)
                     """
-        ret = self._execute_query(sqlstring, (stock_symbol,))
+        ret = self._execute_query(sqlstring,
+                                  (stock_symbol, corp_name))
         if ret[0] == 0:
             self.db_connection.commit()
         return ret

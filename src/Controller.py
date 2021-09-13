@@ -29,12 +29,13 @@ class Controller:
         prepared_symbols: list = []
         # Excising stock class indicators (symbols appended with a string beginning with ^)
         for row in rows:
-            symbol: str = row['symbol']
+            symbol: str = row['symbol']  # e.g. MSFT
+            name: str = row['name']  # Corporation name e.g. Microsoft
             trunced_symbol: str = symbol.split('^')[0]
-            prepared_symbols.append(trunced_symbol)
+            prepared_symbols.append((trunced_symbol, name))
         # Inserting into the database. Key constraints prevent any dups
-        for sym in prepared_symbols:
-            ret = self.db_interface.insert_symbol(sym)
+        for sym, name in prepared_symbols:
+            ret = self.db_interface.insert_symbol(sym, name)
             if ret[0] != 0:
                 print(f'Error inserting {sym}: {ret}')
         # Now pruning the values that were erroneously added
@@ -112,7 +113,7 @@ class Controller:
             try:
                 row_data: list = pull_ret[1]['content']['data']['tradesTable']['rows']
             except TypeError:
-                print('Both today and yesterday values failed the API call. Updating historical data')
+                print('Both today and yesterday values failed the API call updating historical data')
                 exit(1)
             # Updating database
             print(f'loading data for {symbol}')
