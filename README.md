@@ -6,9 +6,11 @@ directory structured as: {'username': <>, 'password': <>, 'client_id': <>, 'secr
 
 <h3> Crawl Rates </h3>
 
-nasdaq.com has a 30 second crawl delay. With about ~7500 stock symbols, getting historical data for everything takes
+Nasdaq.com has a 30 second crawl delay. With about ~7500 stock symbols, getting historical data for everything takes
 some time. --historical gathers data on 120 stock symbols before terminating.  You can build a bash script if you want
 to busy your PC for days.
+
+Reddit.com is much more permissive. Takes maybe 60 seconds to download and process the most recent posts to wsb.
 
 <h3> Command line arguments: </h3>
 
