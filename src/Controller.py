@@ -37,7 +37,9 @@ class Controller:
         for sym, name in prepared_symbols:
             ret = self.db_interface.insert_symbol(sym, name)
             if ret[0] != 0:
-                print(f'Error inserting {sym}: {ret}')
+                ...
+                # Suppressing this since we rely on the database unique constraint.  e.g. errors.
+                # print(f'Error inserting {sym}: {ret}')
         # Now pruning the values that were erroneously added
         # Added after the fact so its sloppy.
         self.prune_invalid_symbols()
@@ -85,7 +87,7 @@ class Controller:
                 else:
                     print(f'Successfully deleted symbol {stored_symbol} from the db.')
 
-    def populate_historical_data(self, count: int = 20) -> tuple[int, dict]:
+    def populate_historical_data(self, count: int = 120) -> tuple[int, dict]:
         """ Pulls a list of stock symbols still requiring historical data and begins updating.
             Count caps the number of symbols that will be updated. This is because
             the crawl delay is 30 seconds and the # of symbols is in the thousands.
