@@ -170,7 +170,12 @@ class Controller:
         for post in matching_posts:
             ret = self.db_interface.insert_post(post)
             if ret[0] != 0:
-                print(f'Error inserting post into database: {ret}')
+                error_string = ret[1]['error_message']
+                if 'UNIQUE' in error_string:
+                    # Relying upon the database to filter for us, so this warning is useless.
+                    continue
+                else:
+                    print(f'Error inserting post into database: {ret}')
 
     def seed(self):
         ret = self.db_interface.seed_db()
