@@ -32,7 +32,7 @@ class DBInterface:
         """
             Debug fnx for manually manipulating the databse
         """
-        sqlstring = """  SELECT * FROM historical_data
+        sqlstring = """  SELECT TOP 100 FROM wsb_posts
                         
                    """
         ret = self._execute_query(sqlstring)
@@ -206,7 +206,10 @@ class DBInterface:
         # Pulling out raw post information first
         post_id: str = post['data']['name']                        # Encoded ID of the post
         author: str = post['data']['author']                    # Uses the encoded name
-        author_fullname: str = post['data']['author_fullname']  # Encoded ID used by the API
+        if author != '[deleted]':
+            author_fullname: str = post['data']['author_fullname']  # Encoded ID used by the API
+        else:
+            author_fullname: str = '[deleted]'
         upvote_ratio: float = post['data']['upvote_ratio']
         comm_count: int = post['data']['num_comments']
         url: str = post['data']['permalink']
