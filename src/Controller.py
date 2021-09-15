@@ -40,6 +40,7 @@ class Controller:
                 ...
                 # Suppressing this since we rely on the database unique constraint.  e.g. errors.
                 # print(f'Error inserting {sym}: {ret}')
+            print(f'Added {sym}:: {name}')
         # Now pruning the values that were erroneously added
         # Added after the fact so its sloppy.
         self.prune_invalid_symbols()
