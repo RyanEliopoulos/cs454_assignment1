@@ -1,8 +1,15 @@
-<h1>Required credentials</h1>
+<h2> Topic </h2>
+
+The program scrapes the wallstreetbets subreddit, parses posts looking for stock symbols, and 
+documents which posts contain which symbols. Paired with historical pricing data, this data set will allow analysis 
+of any predictive power wallstreetbets may have.
+
+<h2>Required credentials</h2>
 
 This program scrapes nasdaq.com and uses the reddit api.  Reddit requires app registration to obtain access keys plus
 a register user account that is considered the acting entity. This program expects a config.json file in the /src 
 directory structured as: {'username': <>, 'password': <>, 'client_id': <>, 'secret': <>}
+
 
 <h3> Crawl Rates </h3>
 
@@ -37,6 +44,7 @@ timezone isn't clear, though I would guess it is east coast time. As such, the p
 There's also a weird bug in the API where we have to say today is yesterday.  The fix for that probably makes this 
 program unusuable on new year's day.
 
-
+e think this program will require python 3.7+ thanks to the type hinting, specifically my use of 'tuple[int, dict]'.
+replacing the tuple keyword with the imported typehint class will drop requirements down at least to 3.6.
 
 
