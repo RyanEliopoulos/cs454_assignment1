@@ -1,4 +1,9 @@
-@TODO
+10/13/2021
+    --  prune_invalid_symbols() bug: Database structure requires first deleting entries
+        in the historical_data table and the symbol_post_junction table. stock_symbol
+        is used as a foreign key in both these tables.
+
+
 
 
 README needs to include sections explaining reddit credentials.
