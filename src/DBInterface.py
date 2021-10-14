@@ -32,7 +32,9 @@ class DBInterface:
         """
             Debug fnx for manually manipulating the databse
         """
-        sqlstring = """  SELECT TOP 100 FROM wsb_posts
+        sqlstring = """  
+                        SELECT * FROM symbol_post_junction
+                        WHERE stock_symbol = 'DUDE'
                         
                    """
         ret = self._execute_query(sqlstring)
@@ -191,6 +193,33 @@ class DBInterface:
         return 0, {'content': symbol_list}
 
     def prune_symbol(self, symbol: str) -> tuple[int, dict]:
+        """ Removes all information pertaining to the given stock from the database.
+
+            Database schema requires this order:
+
+        """
+        # Database schema requires this order
+        #   1) symbol_post_junction
+        #   2) historical data
+        #   3) stock_symbols
+
+        sqlstring: str = """ DELETE FROM symbol_post_junction
+                             WHERE stock_symbol = (?)
+                         """
+
+        ret = self._execute_query(sqlstring, (symbol,))
+        if ret[0] != 0:
+            return ret
+
+        # historical data
+        sqlstring = """ DELETE FROM historical_data
+                        WHERE stock_symbol = (?)
+                    """
+        ret = self._execute_query(sqlstring, (symbol,))
+        if ret[0] != 0:
+            return ret
+
+        # stock_symbols
         sqlstring: str = """ DELETE FROM stock_symbols
                              WHERE stock_symbol = (?)
                          """
