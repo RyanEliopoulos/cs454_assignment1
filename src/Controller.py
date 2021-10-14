@@ -76,7 +76,7 @@ class Controller:
             if stored_symbol not in raw_symbols:
                 ret = self.db_interface.prune_symbol(stored_symbol)
                 if ret[0] != 0:
-                    print(f'Error pruning symbol {stored_symbol}')
+                    print(f'Error pruning symbol {stored_symbol}: {ret}')
                 else:
                     print(f'Sucessfully deleted symbol {stored_symbol} from the db.')
         # Pruning symbols containing a slash
