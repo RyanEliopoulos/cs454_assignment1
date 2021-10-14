@@ -1,3 +1,10 @@
+"""
+https://api.nasdaq.com/api/quote/{stock_symbol}/historical?assetclass=stocks&fromdate=2011-10-13&limit=9999&todate=2021-10-13
+
+
+"""
+
+
 import requests
 import re
 import datetime
